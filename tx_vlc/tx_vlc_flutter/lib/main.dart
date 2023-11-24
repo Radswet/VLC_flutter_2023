@@ -18,35 +18,52 @@ class TransmissionApp extends StatefulWidget {
   const TransmissionApp({Key? key}) : super(key: key);
 
   @override
+  // ignore: library_private_types_in_public_api
   _TransmissionAppState createState() => _TransmissionAppState();
 }
 
 class _TransmissionAppState extends State<TransmissionApp> {
-  String message = "Hola mundo";
+  String preamble = "10101010";
+  String message = "Hola Mundo";
+  String bitText = "";
   int bitIndex = 0;
-  String bitString = "";
-  bool bit = false;
-  String preamble = '10101010';
+  bool isTransmitting = false;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Transmisión de Bits'),
+        title: const Text('Transmisión OOK'),
       ),
       body: GestureDetector(
-        onTap: () async {
+        onTap: () {
+          setState(() {
+            isTransmitting = !isTransmitting;
+            bitIndex = 0;
+          });
           _startTransmission();
         },
         child: Container(
-          color: bit ? Colors.white : Colors.black,
+          color: isTransmitting ? Colors.white : Colors.black,
           child: Center(
-            child: Text(
-              bitString,
-              style: const TextStyle(
-                color: Colors.purple,
-                fontSize: 32,
-              ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  message.substring(0, (bitIndex / 8).floor() + 1),
+                  style: TextStyle(
+                    color: isTransmitting ? Colors.purple : Colors.purple,
+                    fontSize: 32,
+                  ),
+                ),
+                Text(
+                  bitText,
+                  style: TextStyle(
+                    color: isTransmitting ? Colors.purple : Colors.purple,
+                    fontSize: 32,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -55,48 +72,44 @@ class _TransmissionAppState extends State<TransmissionApp> {
   }
 
   void _startTransmission() {
-    bitIndex = 0;
-    for (int i = 0; i < preamble.length; i++) {
-      int bitAux = int.parse(preamble[i]);
-      setState(() {
-        if (bitAux == 1) {
-          bit = true;
-        } else {
-          bit = false;
+    if (isTransmitting) {
+      _sendPreamble();
+
+      Timer.periodic(const Duration(milliseconds: 250), (timer) {
+        int bit = (message.codeUnitAt(bitIndex ~/ 8) >> (7 - bitIndex % 8)) & 1;
+        if (bitText.length % 9 == 0) {
+          bitText += "\n";
+        }
+        bitText += bit.toString();
+        print(bit);
+        bitIndex++;
+
+        setState(() {
+          if (bit == 1) {
+            isTransmitting = true;
+          } else {
+            isTransmitting = false;
+          }
+        });
+
+        if (bitIndex == message.length * 8 - 1) {
+          timer.cancel();
+          setState(() {
+            isTransmitting = false;
+          });
         }
       });
-      print('Enviando preámbulo: $bit');
+    }
+  }
+
+  void _sendPreamble() {
+    for (int i = 0; i < preamble.length; i++) {
+      int bit = int.parse(preamble[i]);
+      setState(() {
+        isTransmitting = bit == 1;
+      });
+      print('Enviando preámbulo: $isTransmitting');
       Future.delayed(const Duration(milliseconds: 50), () {});
     }
-
-    _transmitNextBit();
-  }
-
-  void _transmitNextBit() {
-    if (bit && bitIndex < message.length * 8) {
-      int bit = _getBit(bitIndex);
-      setState(() {
-        bitString += bit.toString();
-        if ((bitIndex + 1) % 8 == 0 && bitIndex < message.length * 8 - 1) {
-          bitString += " ";
-        }
-      });
-      bitIndex++;
-      Future.delayed(const Duration(milliseconds: 250), _transmitNextBit);
-    } else {
-      setState(() {
-        bit = false;
-      });
-    }
-  }
-
-  int _getBit(int index) {
-    int charIndex = index ~/ 8;
-    int charBitIndex = index % 8;
-    if (charIndex < message.length) {
-      int charCode = message.codeUnitAt(charIndex);
-      return (charCode >> (7 - charBitIndex)) & 1;
-    }
-    return 0;
   }
 }
