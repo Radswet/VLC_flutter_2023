@@ -1,5 +1,3 @@
-// ignore_for_file: avoid_print
-
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 
@@ -21,14 +19,12 @@ class CameraApp extends StatefulWidget {
   const CameraApp({Key? key}) : super(key: key);
 
   @override
-  // ignore: library_private_types_in_public_api
   _CameraAppState createState() => _CameraAppState();
 }
 
 class _CameraAppState extends State<CameraApp> {
   late CameraController _controller;
   bool _isReady = false;
-  String finalText = '';
   List<int> bits = [];
   String preamble = '10101010';
   int preambleIndex = 0;
@@ -48,7 +44,7 @@ class _CameraAppState extends State<CameraApp> {
 
     _controller = CameraController(
       camera,
-      ResolutionPreset.medium,
+      ResolutionPreset.low, // Ajusta la resolución aquí
       enableAudio: false,
     );
 
@@ -85,12 +81,16 @@ class _CameraAppState extends State<CameraApp> {
   void _processReceivedData(int luminance) {
     if (!receivingData) {
       if (luminance > 100) {
-        preambleIndex++;
-        if (preambleIndex == preamble.length) {
-          setState(() {
-            receivingData = true;
-            bits = [];
-          });
+        if (preamble[preambleIndex] == '1') {
+          preambleIndex++;
+          if (preambleIndex == preamble.length) {
+            setState(() {
+              receivingData = true;
+              bits = [];
+            });
+          }
+        } else {
+          preambleIndex = 0;
         }
       } else {
         preambleIndex = 0;

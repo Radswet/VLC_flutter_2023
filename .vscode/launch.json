@@ -1,0 +1,48 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "rx_vlc_flutter",
+            "cwd": "rx_vlc_flutter",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "rx_vlc_flutter (profile mode)",
+            "cwd": "rx_vlc_flutter",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "rx_vlc_flutter (release mode)",
+            "cwd": "rx_vlc_flutter",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        },
+        {
+            "name": "tx_vlc_flutter",
+            "cwd": "tx_vlc/tx_vlc_flutter",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "tx_vlc_flutter (profile mode)",
+            "cwd": "tx_vlc/tx_vlc_flutter",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "tx_vlc_flutter (release mode)",
+            "cwd": "tx_vlc/tx_vlc_flutter",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        }
+    ]
+}

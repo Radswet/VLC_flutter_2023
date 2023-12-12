@@ -84,7 +84,7 @@ class _TransmissionAppState extends State<TransmissionApp> {
         bitText += "\n";
 
         // Inicia el segundo Timer después de completar la primera parte
-        Timer.periodic(const Duration(milliseconds: 1000), (Timer timer2) {
+        Timer.periodic(const Duration(milliseconds: 250), (Timer timer2) {
           if (bitIndex % 8 == 0 && bitIndex > 0) {
             bitText += "\n";
           }
