@@ -74,21 +74,7 @@ class _TransmissionAppState extends State<TransmissionApp> {
   }
 
   void _startTransmission() {
-    /*
-    int iteration = 0;
-    Timer.periodic(const Duration(milliseconds: 250), (Timer timer1) {
-      int bit = preamble[iteration] == "1" ? 1 : 0;
-      setState(() {
-        bitText += bit.toString();
-        bit == 1 ? bitColor = true : bitColor = false;
-      });*/
-    //if (iteration == preamble.length - 1) {
     isTransmitting = true;
-    /*
-        timer1.cancel(); // Cancela el primer Timer
-        bitText += "\n";
-        */
-    // Inicia el segundo Timer después de completar la primera parte
     Timer.periodic(const Duration(milliseconds: 1000), (Timer timer2) {
       if (bitIndex % 8 == 0 && bitIndex > 0) {
         bitText += "\n";
@@ -107,15 +93,11 @@ class _TransmissionAppState extends State<TransmissionApp> {
       });
 
       if (bitIndex >= message.length * 8) {
-        timer2
-            .cancel(); // Cancela el segundo Timer cuando se completa la transmisión
+        timer2.cancel();
         setState(() {
           bitColor = false;
         });
       }
     });
-    //}
-    //iteration++;
-    //});
   }
 }
