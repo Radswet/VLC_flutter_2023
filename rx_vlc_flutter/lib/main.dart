@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
+import 'package:flutter/services.dart';
 
 void main() => runApp(const MyApp());
 
@@ -25,13 +26,13 @@ class CameraApp extends StatefulWidget {
 
 class _CameraAppState extends State<CameraApp> {
   late CameraController _controller;
-  bool _isReady = false;
   List<int> bits = [];
   bool receivingData = false;
-
   String receivedText = '';
   String luminanceText = '';
 
+  bool preambleOk = false;
+  int inter = 1000;
   late StreamController<CameraImage> _imageStreamController;
 
   @override
@@ -52,7 +53,8 @@ class _CameraAppState extends State<CameraApp> {
 
     await _controller.initialize();
 
-    _imageStreamController = StreamController<CameraImage>();
+    _controller.setExposureMode(ExposureMode.auto);
+    _imageStreamController = StreamController<CameraImage>.broadcast();
 
     _controller.startImageStream((CameraImage image) {
       _imageStreamController.add(image);
@@ -62,35 +64,88 @@ class _CameraAppState extends State<CameraApp> {
       return;
     }
 
-    setState(() {
-      _isReady = true;
-    });
+    setState(() {});
   }
 
   void _startImageProcessing() {
-    const Duration interval = Duration(seconds: 1); // Intervalo de un segundo
+    int contador = 0;
+    Duration interval =
+        Duration(milliseconds: inter); // Intervalo de un segundo
     Stopwatch stopwatch = Stopwatch()..start(); // Inicia el cronómetro
 
+    int preambleaCount = 0;
+
+    int auxluminance = 0;
+    int preambleAux = 0;
+
     _imageStreamController.stream.listen((CameraImage image) {
-      if (stopwatch.elapsed >= interval) {
-        int sum = 0;
-        for (int i = 0; i < image.planes[0].bytes.length; i++) {
-          sum += image.planes[0].bytes[i];
-        }
-        int luminance = sum ~/ image.planes[0].bytes.length;
-        luminanceText = 'Luminancia actual: $luminance';
-        bits.add(luminance > 100 ? 1 : 0);
-
-        setState(() {
+      if (preambleOk) {
+        if (stopwatch.elapsed >= interval) {
+          int sum = 0;
+          for (int i = 0; i < image.planes[0].bytes.length; i++) {
+            sum += image.planes[0].bytes[i];
+          }
+          int luminance = sum ~/ image.planes[0].bytes.length;
           luminanceText = 'Luminancia actual: $luminance';
-          receivingData = true;
-        });
+          bits.add(luminance > 140 ? 1 : 0);
 
-        if (bits.length >= 8) {
-          _processCapturedBits();
+          setState(() {
+            luminanceText = 'Luminancia actual: $luminance';
+            receivingData = true;
+          });
+
+          if (bits.length >= 8) {
+            _processCapturedBits();
+            interval = Duration(milliseconds: inter - 10);
+            contador++;
+            if (contador == 10) {
+              preambleOk = false;
+              contador = 0;
+              bits = [];
+              return;
+            }
+          }
+
+          stopwatch.reset();
         }
+      } else {
+        if (stopwatch.elapsed >= interval) {
+          int sum = 0;
+          for (int i = 0; i < image.planes[0].bytes.length; i++) {
+            sum += image.planes[0].bytes[i];
+          }
 
-        stopwatch.reset(); // Reinicia el cronómetro después de agregar un bit
+          int luminance = sum ~/ image.planes[0].bytes.length;
+          luminanceText = 'Luminancia actual: $luminance';
+          bits.add(luminance > 100 ? 1 : 0);
+
+          setState(() {
+            luminanceText = 'Luminancia actual: $luminance';
+            receivingData = true;
+          });
+
+          auxluminance = luminance > 100 ? 1 : 0;
+          if (auxluminance != preambleAux) {
+            preambleaCount++;
+            preambleAux = auxluminance;
+          } else {
+            preambleaCount = 0;
+          }
+
+          if (preambleaCount == 8) {
+            setState(() {
+              preambleOk = true;
+              print('Preamble OK');
+              bits = [];
+            });
+          }
+
+          if (bits.length >= 8) {
+            bits = [];
+          }
+
+          stopwatch.reset();
+        }
       }
     });
   }
@@ -164,11 +219,16 @@ class _CameraAppState extends State<CameraApp> {
             right: 0,
             child: //boton
                 ElevatedButton(
-              onPressed: () {
-                _startImageProcessing();
-              },
-              child: const Text('Recibir'),
-            ),
+                    onPressed: () {
+                      _startImageProcessing();
+                    },
+                    style: ButtonStyle(
+                      backgroundColor: !preambleOk
+                          ? MaterialStateProperty.all<Color>(Colors.white)
+                          : MaterialStateProperty.all<Color>(Colors.purple),
+                    ),
+                    child: const Text('Recibir',
+                        style: TextStyle(color: Colors.black))),
           ),
           Positioned(
             bottom: 56,

@@ -23,7 +23,7 @@ class TransmissionApp extends StatefulWidget {
 
 class _TransmissionAppState extends State<TransmissionApp> {
   String preamble = "10101010";
-  String message = "Hola Mundo";
+  String message = "ªHola Mundo";
   String bitText = "";
   int bitIndex = 0;
   bool isTransmitting = false;
